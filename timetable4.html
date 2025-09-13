@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Skill Roadmap</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 40px;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #4f46e5, #9333ea, #ec4899);
+      background-size: 300% 300%;
+      animation: gradientMove 12s ease infinite;
+      color: #fff;
+    }
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-weight: 700;
+      font-size: 2rem;
+      color: #fff;
+    }
+
+    .roadmap-box {
+      background: rgba(0,0,0,0.55);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      backdrop-filter: blur(12px);
+      max-width: 900px;
+      margin: auto;
+    }
+
+    .roadmap-step {
+      background: rgba(255,255,255,0.08);
+      border-left: 6px solid #ffcc70;
+      margin-bottom: 20px;
+      padding: 15px 20px;
+      border-radius: 12px;
+      transition: 0.3s;
+      color: #fff;
+    }
+    .roadmap-step:hover {
+      transform: translateX(6px);
+      background: rgba(255,255,255,0.18);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+    }
+
+    .roadmap-step h5 {
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+    .roadmap-step p {
+      margin: 0;
+      color: #ddd;
+    }
+    .time {
+      font-size: 0.9rem;
+      color: #ffb347;
+      font-weight: 600;
+      margin-top: 6px;
+    }
+
+    .back-btn {
+      display: inline-block;
+      margin-bottom: 20px;
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: 0.3s ease;
+    }
+    .back-btn:hover {
+      background: rgba(255,255,255,0.3);
+      color: #fff;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Back button -->
+    <a href="sh1.html" class="back-btn">⬅ Back</a>
+
+    <h1>🚀 Roadmap for <span id="skillName"></span></h1>
+    <div class="roadmap-box" id="roadmapContainer"></div>
+  </div>
+
+  <script>
+    // Roadmaps with estimated time
+    const roadmaps = {
+      "Software-development": [
+        { title: "Step 1: Learn Basics", desc: "Understand programming fundamentals, version control (Git), and problem solving.", time: "2 weeks" },
+        { title: "Step 2: Master OOP", desc: "Dive into Object-Oriented Programming and design patterns.", time: "3 weeks" },
+        { title: "Step 3: Frameworks", desc: "Learn frameworks like Spring Boot, .NET, or Django.", time: "4 weeks" },
+        { title: "Step 4: Projects", desc: "Build real-world applications to strengthen your portfolio.", time: "Ongoing" }
+      ],
+      "Internet-of-Things": [
+        { title: "Step 1: Hardware Basics", desc: "Learn about sensors, microcontrollers (Arduino, ESP32).", time: "2 weeks" },
+        { title: "Step 2: Connectivity", desc: "Understand WiFi, Bluetooth, MQTT protocols.", time: "2 weeks" },
+        { title: "Step 3: Cloud & Data", desc: "Send IoT data to cloud platforms like AWS IoT or Azure IoT Hub.", time: "3 weeks" },
+        { title: "Step 4: Projects", desc: "Develop IoT projects like smart home automation.", time: "Ongoing" }
+      ],
+      "Large-Language-Module": [
+        { title: "Step 1: NLP Basics", desc: "Understand tokenization, embeddings, and language models.", time: "3 weeks" },
+        { title: "Step 2: Pretrained Models", desc: "Explore Hugging Face Transformers, BERT, GPT.", time: "3 weeks" },
+        { title: "Step 3: Fine-tuning", desc: "Learn how to fine-tune LLMs for custom tasks.", time: "4 weeks" },
+        { title: "Step 4: Applications", desc: "Develop chatbots, summarizers, or code assistants.", time: "Ongoing" }
+      ]
+      // ... extend with other skills here ...
+    };
+
+    function loadRoadmap() {
+      const params = new URLSearchParams(window.location.search);
+      const skill = params.get("skill") || "General";
+      document.getElementById("skillName").textContent = skill.replace(/-/g," ");
+      const container = document.getElementById("roadmapContainer");
+      container.innerHTML = "";
+
+      (roadmaps[skill] || [{title: "Explore", desc: "Use your time to learn new skills.", time: "Flexible"}])
+        .forEach(step => {
+          container.innerHTML += `
+            <div class="roadmap-step">
+              <h5>${step.title}</h5>
+              <p>${step.desc}</p>
+              <div class="time">⏳ Estimated Time: ${step.time}</div>
+            </div>
+          `;
+        });
+    }
+
+    loadRoadmap();
+  </script>
+</body>
+</html>

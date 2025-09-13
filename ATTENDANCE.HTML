@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Attendance Record — Weekly & Monthly</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* Your provided gradient glass style */
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #4f46e5, #9333ea, #ec4899);
+      background-size: 300% 300%;
+      animation: gradientMove 12s ease infinite;
+    }
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    h3, h5, h6, span, th, td { color: #fff; }
+
+    .card {
+      background: rgba(0,0,0,0.6);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      backdrop-filter: blur(12px);
+      color: #fff;
+    }
+
+    .sidebar {
+      background: rgba(0,0,0,0.6);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      backdrop-filter: blur(12px);
+      color: #fff;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .subject-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .summary-card {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.08);
+      text-align: center;
+      font-size: 14px;
+    }
+    .subject-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 8px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      margin-bottom: 8px;
+    }
+    .mini-week {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .mini-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      font-size: 11px;
+      display: grid;
+      place-items: center;
+      color: white;
+    }
+    .mini-dot.present { background: #27ae60; }
+    .mini-dot.absent  { background: #c0392b; }
+    .mini-dot.null    { background: #7f8c8d; }
+    .today-badge {
+      min-width: 76px;
+      text-align:center;
+      font-size: 12px;
+    }
+
+    table th, table td {
+      vertical-align: middle;
+      text-align:center;
+      color: #fff;
+    }
+    .table-dark th {
+      background: rgba(255,255,255,0.12) !important;
+    }
+
+    .btn-back {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      border-radius: 8px;
+      padding: 6px 14px;
+      color: #fff;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    .btn-back:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    /* small helpers */
+    .badge-small { font-size: 11px; padding: 5px 8px; border-radius: 8px; }
+    .table-responsive { overflow-x:auto; }
+  </style>
+</head>
+<body class="p-4">
+  <div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <button class="btn-back" onclick="window.location.href='db6.html'">⬅ Back</button>
+      <h3 class="mb-0">Attendance Record — Weekly & Monthly</h3>
+      <div>
+        <button id="refreshBtn" class="btn btn-sm btn-light me-2">🔁 Refresh Data</button>
+        <span class="text-white-50">Total Subjects: <strong id="totalSubjectsTop">0</strong></span>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <!-- Left: Subject list -->
+      <div class="col-lg-4">
+        <div class="sidebar">
+          <h5 class="mb-3">Subject Roster</h5>
+          <div class="subject-list" id="subjectList"></div>
+
+          <div class="summary-card" id="todaySummary">
+            📊 <strong>Today’s Summary</strong><br>
+            Present: <span id="todayPresent">0</span> | Absent: <span id="todayAbsent">0</span> | NULL: <span id="todayNull">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Weekly + Monthly -->
+      <div class="col-lg-8">
+        <!-- WEEKLY -->
+        <div class="card shadow-sm p-3 mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Weekly Attendance Table</h5>
+            <div class="text-white-50">Week: <span id="weekRange"></span></div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+              <thead class="table-dark">
+                <tr><th>Day</th><th>Present</th><th>Absent</th><th>NULL</th></tr>
+              </thead>
+              <tbody id="weeklyTableBody"></tbody>
+            </table>
+          </div>
+
+          <div class="d-flex justify-content-between mt-2">
+            <div><strong>Total subjects:</strong> <span id="totalSubjects">0</span></div>
+            <div><strong>Week Present:</strong> <span id="weekPresent">0</span> &nbsp;&nbsp; <strong>Week Absent:</strong> <span id="weekAbsent">0</span> &nbsp;&nbsp; <strong>Week NULL:</strong> <span id="weekNull">0</span></div>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-7">
+            <div class="card p-3 shadow-sm">
+              <h6 class="mb-2">Weekly Attendance (Bar)</h6>
+              <canvas id="barChartWeek" style="height:260px"></canvas>
+            </div>
+          </div>
+          <div class="col-md-5">
+            <div class="card p-3 shadow-sm">
+              <h6 class="mb-2">Weekly Attendance (Pie)</h6>
+              <canvas id="pieChartWeek" style="height:260px"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- MONTHLY -->
+        <div class="card shadow-sm p-3 mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Monthly Attendance Table</h5>
+            <div class="text-white-50">Month: <span id="monthRange"></span></div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+              <thead class="table-dark" id="monthlyTableHead"></thead>
+              <tbody id="monthlyTableBody"></tbody>
+              <tfoot id="monthlyTotalsRow"></tfoot>
+            </table>
+          </div>
+
+          <div class="d-flex justify-content-between mt-2">
+            <div><strong>Total subjects:</strong> <span id="totalSubjectsMonthly">0</span></div>
+            <div><strong>Month Present:</strong> <span id="monthPresent">0</span> &nbsp;&nbsp; <strong>Month Absent:</strong> <span id="monthAbsent">0</span> &nbsp;&nbsp; <strong>Month NULL:</strong> <span id="monthNull">0</span></div>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-7">
+            <div class="card p-3 shadow-sm">
+              <h6 class="mb-2">Monthly Attendance (Bar)</h6>
+              <canvas id="barChartMonth" style="height:260px"></canvas>
+            </div>
+          </div>
+          <div class="col-md-5">
+            <div class="card p-3 shadow-sm">
+              <h6 class="mb-2">Monthly Attendance (Pie)</h6>
+              <canvas id="pieChartMonth" style="height:260px"></canvas>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+<script>
+  // DAYS as Mon..Sun (Sunday index 6)
+  const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+
+  // keep Sunday as 'N' always; other values 'P', 'A', 'N'
+  function genWeekAttendance() {
+    const arr = [];
+    for (let d=0; d<7; d++) {
+      if (d === 6) arr.push('N'); // Sunday always NULL
+      else {
+        const r = Math.random();
+        if (r < 0.6) arr.push('P');
+        else if (r < 0.9) arr.push('A');
+        else arr.push('N');
+      }
+    }
+    return arr;
+  }
+
+  function generateMockSubjects(n = 6) {
+    const names = ["Mathematics","Physics","Chemistry","Biology","English","Computer Science","Economics","History"];
+    const today = new Date();
+    const daysInMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
+
+    return names.slice(0,n).map((nm,i) => {
+      let monthly = [];
+      for (let d=1; d<=daysInMonth; d++) {
+        // if Sunday -> 'N'
+        if (new Date(today.getFullYear(), today.getMonth(), d).getDay() === 0) {
+          monthly.push('N');
+        } else {
+          const r = Math.random();
+          if (r < 0.6) monthly.push('P');
+          else if (r < 0.9) monthly.push('A');
+          else monthly.push('N');
+        }
+      }
+      return { subject: nm, code: `SUB${101+i}`, weekly: genWeekAttendance(), monthly };
+    });
+  }
+
+  let subjectsData = generateMockSubjects(6);
+
+  /* RENDER SUBJECT LIST */
+  function renderSubjectList() {
+    const list = document.getElementById('subjectList');
+    list.innerHTML = '';
+    const todayIdx = (new Date().getDay() + 6) % 7; // convert Sun=0 -> 6, Mon=1->0
+    let todayPresent = 0, todayAbsent = 0, todayNull = 0;
+    subjectsData.forEach(s => {
+      const todayStatus = s.weekly[todayIdx];
+      if (todayStatus === 'P') todayPresent++;
+      else if (todayStatus === 'A') todayAbsent++;
+      else todayNull++;
+      list.innerHTML += `
+        <div class="subject-item">
+          <div>
+            <div class="fw-semibold">${s.subject} <small class="text-white-50">(${s.code})</small></div>
+            <div class="mini-week mt-1">
+              ${s.weekly.map(v => `<div class="mini-dot ${v==='P'?'present':v==='A'?'absent':'null'}">${v}</div>`).join('')}
+            </div>
+          </div>
+          <div class="text-end">
+            <div class="badge badge-small ${todayStatus==='P'?'bg-success':todayStatus==='A'?'bg-danger':'bg-secondary'} today-badge">
+              ${todayStatus==='P'?'Present':todayStatus==='A'?'Absent':'NULL'}
+            </div>
+          </div>
+        </div>`;
+    });
+    document.getElementById('totalSubjectsTop').textContent = subjectsData.length;
+    document.getElementById('todayPresent').textContent = todayPresent;
+    document.getElementById('todayAbsent').textContent = todayAbsent;
+    document.getElementById('todayNull').textContent = todayNull;
+  }
+
+  /* WEEKLY TABLE & TOTALS */
+  function computeWeeklyTotals() {
+    // totals for each day: {P:count, A:count, N:count}
+    const totals = DAYS.map(()=>({P:0,A:0,N:0}));
+    subjectsData.forEach(s=>{
+      s.weekly.forEach((v,idx)=>{
+        totals[idx][v] = (totals[idx][v]||0) + 1;
+      });
+    });
+    return totals;
+  }
+
+  function renderWeeklyTable() {
+    const totals = computeWeeklyTotals();
+    const tbody = document.getElementById('weeklyTableBody');
+    tbody.innerHTML = '';
+    let wp=0, wa=0, wn=0;
+    totals.forEach((t, idx) => {
+      tbody.innerHTML += `<tr><td>${DAYS[idx]}</td><td>${t.P}</td><td>${t.A}</td><td>${t.N}</td></tr>`;
+      wp += t.P; wa += t.A; wn += t.N;
+    });
+    document.getElementById('totalSubjects').textContent = subjectsData.length;
+    document.getElementById('weekPresent').textContent = wp;
+    document.getElementById('weekAbsent').textContent = wa;
+    document.getElementById('weekNull').textContent = wn;
+    return { totals, wp, wa, wn };
+  }
+
+  /* MONTHLY TABLE & TOTALS */
+  function renderMonthlyTable() {
+    const thead = document.getElementById('monthlyTableHead');
+    const tbody = document.getElementById('monthlyTableBody');
+    const tfoot = document.getElementById('monthlyTotalsRow');
+    tbody.innerHTML = '';
+    tfoot.innerHTML = '';
+    thead.innerHTML = `<tr><th>Date</th>${subjectsData.map(s=>`<th>${s.subject}</th>`).join('')}</tr>`;
+
+    const today = new Date();
+    const daysInMonth = subjectsData[0].monthly.length;
+
+    for (let d=1; d<=daysInMonth; d++) {
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>${d}/${today.getMonth()+1}</td>` +
+        subjectsData.map(s=>{
+          const v = s.monthly[d-1];
+          return `<td class="${v==='P'?'table-success':v==='A'?'table-danger':'table-secondary'}">${v}</td>`;
+        }).join('');
+      tbody.appendChild(row);
+    }
+
+    // totals per subject
+    let grandP = 0, grandA = 0, grandN = 0;
+    const totalsRow = document.createElement('tr');
+    totalsRow.innerHTML = `<td><strong>Totals</strong></td>` +
+      subjectsData.map(s=>{
+        const P = s.monthly.filter(v=>v==='P').length;
+        const A = s.monthly.filter(v=>v==='A').length;
+        const N = s.monthly.filter(v=>v==='N').length;
+        grandP += P; grandA += A; grandN += N;
+        return `<td>Present ${P} | Absent ${A} | Null ${N}</td>`;
+      }).join('');
+    tfoot.appendChild(totalsRow);
+
+    document.getElementById('totalSubjectsMonthly').textContent = subjectsData.length;
+    document.getElementById('monthPresent').textContent = grandP;
+    document.getElementById('monthAbsent').textContent = grandA;
+    document.getElementById('monthNull').textContent = grandN;
+
+    return { grandP, grandA, grandN };
+  }
+
+  /* CHARTS */
+  let barWeek, pieWeek, barMonth, pieMonth;
+  function renderCharts() {
+    const { totals, wp, wa, wn } = renderWeeklyTable();
+    // Week bar
+    if (barWeek) barWeek.destroy();
+    if (pieWeek) pieWeek.destroy();
+    barWeek = new Chart(document.getElementById('barChartWeek'), {
+      type: 'bar',
+      data: {
+        labels: DAYS,
+        datasets: [
+          { label: 'Present', data: totals.map(t=>t.P), backgroundColor: '#27ae60' },
+          { label: 'Absent',  data: totals.map(t=>t.A), backgroundColor: '#c0392b' },
+          { label: 'NULL',    data: totals.map(t=>t.N), backgroundColor: '#7f8c8d' }
+        ]
+      },
+      options: { responsive:true, scales:{ y:{ beginAtZero:true, ticks:{ color:'#fff' }}, x:{ticks:{ color:'#fff' } } } }
+    });
+
+    pieWeek = new Chart(document.getElementById('pieChartWeek'), {
+      type:'pie',
+      data: {
+        labels:['Present','Absent','NULL'],
+        datasets:[{ data:[wp,wa,wn], backgroundColor:['#27ae60','#c0392b','#7f8c8d'] }]
+      }
+    });
+
+    // Monthly totals per subject
+    const totalsMonth = subjectsData.map(s=>({
+      subject: s.subject,
+      P: s.monthly.filter(v=>v==='P').length,
+      A: s.monthly.filter(v=>v==='A').length,
+      N: s.monthly.filter(v=>v==='N').length
+    }));
+
+    const grand = totalsMonth.reduce((acc,t)=>{
+      acc.P+=t.P; acc.A+=t.A; acc.N+=t.N; return acc;
+    }, {P:0,A:0,N:0});
+
+    if (barMonth) barMonth.destroy();
+    if (pieMonth) pieMonth.destroy();
+
+    barMonth = new Chart(document.getElementById('barChartMonth'), {
+      type:'bar',
+      data: {
+        labels: totalsMonth.map(t=>t.subject),
+        datasets: [
+          { label:'Present', data: totalsMonth.map(t=>t.P), backgroundColor: '#2980b9' },
+          { label:'Absent',  data: totalsMonth.map(t=>t.A), backgroundColor: '#8e44ad' },
+          { label:'NULL',    data: totalsMonth.map(t=>t.N), backgroundColor: '#7f8c8d' }
+        ]
+      },
+      options: { responsive:true, scales:{ x:{ticks:{ color:'#fff' }}, y:{ beginAtZero:true, ticks:{ color:'#fff' } } } }
+    });
+
+    pieMonth = new Chart(document.getElementById('pieChartMonth'), {
+      type:'pie',
+      data: {
+        labels: ['Present','Absent','NULL'],
+        datasets: [{ data: [grand.P, grand.A, grand.N], backgroundColor:['#2980b9','#8e44ad','#7f8c8d'] }]
+      }
+    });
+  }
+
+  /* DATE RANGE TEXT */
+  function setWeekRangeText(){
+    const today=new Date();
+    const monOffset=((today.getDay()+6)%7);
+    const monday=new Date(today); monday.setDate(today.getDate()-monOffset);
+    const sunday=new Date(monday); sunday.setDate(monday.getDate()+6);
+    const fmt = d => `${d.getDate()}/${d.getMonth()+1}`;
+    document.getElementById('weekRange').textContent = `${fmt(monday)} - ${fmt(sunday)}`;
+    document.getElementById('monthRange').textContent = `${today.toLocaleString('default',{month:'long'})} ${today.getFullYear()}`;
+  }
+
+  /* FULL RENDER */
+  function fullRender(){
+    renderSubjectList();
+    renderMonthlyTable();
+    renderCharts();
+    setWeekRangeText();
+  }
+
+  document.getElementById('refreshBtn').addEventListener('click',()=>{
+    subjectsData = generateMockSubjects(6);
+    fullRender();
+  });
+
+  // initial render
+  fullRender();
+</script>
+</body>
+</html>

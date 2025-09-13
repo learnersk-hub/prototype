@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InClass — Student Portal</title>
+  <style>
+    :root {
+      --indigo: #4f46e5;
+      --indigo-dark: #4338ca;
+      --purple: #9333ea;
+      --pink: #ec4899;
+      --glass: rgba(255, 255, 255, 0.9);
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, var(--indigo), var(--purple), var(--pink));
+      background-size: 300% 300%;
+      animation: gradientMove 12s infinite alternate;
+      color: #333;
+    }
+    @keyframes gradientMove { 0% { background-position: left; } 100% { background-position: right; } }
+    .container {
+      min-height: 100vh;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+    h1 { color: #fff; margin-bottom: 6px; text-align: center; }
+    .card {
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.15);
+      width: 100%;
+      max-width: 700px;
+    }
+    .profile {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .avatar {
+      width: 64px; height: 64px;
+      border-radius: 50%; background: #e5e7eb;
+      display: grid; place-items: center;
+      font-weight: 800; font-size: 1.5rem; color: var(--indigo);
+    }
+    .meta { line-height: 1.4; }
+    .name { font-weight: 700; font-size: 1.2rem; }
+    .subtle { color: #6b7280; font-size: .95rem; }
+    .status-pill {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .present { background: #ecfdf5; color: #065f46; }
+    .absent { background: #fef2f2; color: #991b1b; }
+    canvas {
+      width: 100% !important;
+      height: 300px !important;
+      background: rgba(255,255,255,.85);
+      border-radius: 16px;
+      padding: 10px;
+    }
+    .footer { color: #fff; opacity: .85; margin-top: 18px; font-size: .9rem; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>InClass — Student Portal</h1>
+
+    <div class="card">
+      <div class="profile">
+        <div class="avatar" id="avatar">JD</div>
+        <div class="meta">
+          <div class="name" id="studentName">John Doe</div>
+          <div class="subtle">Roll No: <span id="studentRoll">21CS101</span></div>
+          <div class="subtle">Course: B.Tech CSE</div>
+        </div>
+      </div>
+      <div class="status-pill present" id="todayStatus">Present Today</div>
+    </div>
+
+    <div class="card">
+      <h2>Attendance Overview</h2>
+      <canvas id="chart"></canvas>
+    </div>
+
+    <div class="footer">Demo Mode: Mock data is shown. Connect backend later.
+        <div style="margin-top:12px;">
+  <button id="btnLogout" style="
+    padding: 10px 18px;
+    background: #111827;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: bold;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+  ">
+    Log Out
+  </button>
+</div>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    // Mock student data
+    const student = {
+      name: "John Doe",
+      roll: "21CS101",
+      presentToday: true,
+      history: [
+        { date: "2025-09-01", present: true },
+        { date: "2025-09-02", present: false },
+        { date: "2025-09-03", present: true },
+        { date: "2025-09-04", present: true },
+        { date: "2025-09-05", present: true }
+      ]
+    };
+
+    // Update profile
+    document.getElementById("studentName").textContent = student.name;
+    document.getElementById("studentRoll").textContent = student.roll;
+    document.getElementById("avatar").textContent =
+      student.name.split(" ").map(n => n[0]).join("").slice(0,2).toUpperCase();
+
+    // Status pill
+    const statusEl = document.getElementById("todayStatus");
+    if (student.presentToday) {
+      statusEl.textContent = "Present Today";
+      statusEl.classList.add("present");
+    } else {
+      statusEl.textContent = "Absent Today";
+      statusEl.classList.add("absent");
+    }
+
+    // Chart.js setup
+    const ctx = document.getElementById("chart").getContext("2d");
+    const labels = student.history.map(h => h.date);
+    const data = student.history.map(h => h.present ? 1 : 0);
+    
+    document.getElementById("btnLogout").addEventListener("click", () => {
+  window.location.href = "index.html";
+});
+
+
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [{
+          label: "Attendance (1 = Present, 0 = Absent)",
+          data: data,
+          borderColor: "#4f46e5",
+          backgroundColor: "rgba(79,70,229,0.2)",
+          borderWidth: 2,
+          fill: true,
+          tension: 0.3,
+          pointRadius: 5,
+          pointBackgroundColor: "#9333ea"
+        }]
+      },
+      options: {
+        scales: {
+          y: {
+            ticks: { stepSize: 1 },
+            min: 0, max: 1
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

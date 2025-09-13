@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Class Record — Weekly & Monthly</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #4f46e5, #9333ea, #ec4899);
+      background-size: 300% 300%;
+      animation: gradientMove 12s ease infinite;
+    }
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    h3, h5, h6, span, th, td { color: #fff; }
+
+    .card {
+      background: rgba(0,0,0,0.6);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      backdrop-filter: blur(12px);
+      color: #fff;
+    }
+
+    .sidebar {
+      background: rgba(0,0,0,0.6);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      backdrop-filter: blur(12px);
+      color: #fff;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .student-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .summary-card {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.08);
+      text-align: center;
+      font-size: 14px;
+    }
+    .student-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 8px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.08);
+      margin-bottom: 8px;
+    }
+    .mini-week {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .mini-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      font-size: 11px;
+      display: grid;
+      place-items: center;
+      color: white;
+    }
+    .mini-dot.present { background: #27ae60; }
+    .mini-dot.absent  { background: #c0392b; }
+    .mini-dot.null    { background: #7f8c8d; }
+    .today-badge {
+      min-width: 76px;
+      text-align:center;
+      font-size: 12px;
+    }
+
+    table th, table td {
+      vertical-align: middle;
+      text-align:center;
+      color: #fff;
+    }
+    .table-dark th {
+      background: rgba(255,255,255,0.2) !important;
+    }
+
+    .btn-back {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      border-radius: 8px;
+      padding: 6px 14px;
+      color: #fff;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    .btn-back:hover {
+      background: rgba(255,255,255,0.3);
+    }
+  </style>
+</head>
+<body class="p-4">
+  <div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <button class="btn-back" onclick="window.location.href='page3.html'">⬅ Back</button>
+      <h3 class="mb-0">Class Record — Weekly & Monthly</h3>
+      <div>
+        <button id="refreshBtn" class="btn btn-sm btn-light me-2">🔁 Refresh Data</button>
+        <span class="text-white-50">Total students: <strong id="totalStudentsTop">0</strong></span>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <!-- Left: Student list -->
+      <div class="col-lg-4">
+        <div class="sidebar">
+          <h5 class="mb-3">Student Roster</h5>
+          <div class="student-list" id="studentList"></div>
+          <div class="summary-card" id="todaySummary">
+            📊 <strong>Today’s Summary</strong><br>
+            Present: <span id="todayPresent">0</span> | Absent: <span id="todayAbsent">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Weekly + Monthly -->
+      <div class="col-lg-8">
+        <!-- WEEKLY -->
+        <div class="card shadow-sm p-3 mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Weekly Attendance Table</h5>
+            <div class="text-white-50">Week: <span id="weekRange"></span></div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+              <thead class="table-dark">
+                <tr><th>Day</th><th>Present</th><th>Absent</th></tr>
+              </thead>
+              <tbody id="weeklyTableBody"></tbody>
+            </table>
+          </div>
+
+          <div class="d-flex justify-content-between mt-2">
+            <div><strong>Total students:</strong> <span id="totalStudents">0</span></div>
+            <div><strong>Week Present:</strong> <span id="weekPresent">0</span> &nbsp;&nbsp; <strong>Week Absent:</strong> <span id="weekAbsent">0</span></div>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-7">
+            <div class="card p-3 shadow-sm">
+              <h6 class="mb-2">Weekly Attendance (Bar)</h6>
+              <canvas id="barChart" style="height:260px"></canvas>
+            </div>
+          </div>
+          <div class="col-md-5">
+            <div class="card p-3 shadow-sm">
+              <h6 class="mb-2">Weekly Attendance (Pie)</h6>
+              <canvas id="pieChart" style="height:260px"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- MONTHLY -->
+        <div class="card shadow-sm p-3 mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Monthly Attendance Table</h5>
+            <div class="text-white-50">Month: <span id="monthRange"></span></div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+              <thead class="table-dark">
+                <tr><th>Week</th><th>Present</th><th>Absent</th></tr>
+              </thead>
+              <tbody id="monthlyTableBody"></tbody>
+            </table>
+          </div>
+
+          <div class="d-flex justify-content-between mt-2">
+            <div><strong>Total students:</strong> <span id="totalStudentsMonthly">0</span></div>
+            <div><strong>Month Present:</strong> <span id="monthPresent">0</span> &nbsp;&nbsp; <strong>Month Absent:</strong> <span id="monthAbsent">0</span></div>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-7">
+            <div class="card p-3 shadow-sm">
+              <h6 class="mb-2">Monthly Attendance (Bar)</h6>
+              <canvas id="barChartMonth" style="height:260px"></canvas>
+            </div>
+          </div>
+          <div class="col-md-5">
+            <div class="card p-3 shadow-sm">
+              <h6 class="mb-2">Monthly Attendance (Pie)</h6>
+              <canvas id="pieChartMonth" style="height:260px"></canvas>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+<script>
+  const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+
+  function getTodayIndexMon0() {
+    const d = new Date().getDay();
+    return (d + 6) % 7;
+  }
+
+  function genWeekAttendance() {
+    const arr = [];
+    for (let d=0; d<7; d++) {
+      if(d === 6) arr.push(null); // Sunday always NULL
+      else arr.push(Math.random() < 0.8);
+    }
+    return arr;
+  }
+
+  function generateMockStudents(n = 20) {
+    const names = [
+      "Ravi Kumar","Sneha Sharma","Amit Verma","Priya Singh","Arjun Mehta","Simran Kaur",
+      "Rohit Yadav","Neha Gupta","Karan Patel","Anjali Das","Mohit Chauhan","Divya Nair",
+      "Aditya Roy","Pooja Mishra","Suresh Raina","Kriti Saxena","Rahul Sharma","Alok Jain",
+      "Meena Iyer","Manish Khanna"
+    ];
+    return names.slice(0,n).map((nm,i)=>({
+      name: nm,
+      roll: `21CS${101+i}`,
+      weekly: genWeekAttendance()
+    }));
+  }
+
+  let studentsData = generateMockStudents(20);
+  const totalStudentsFixed = studentsData.length;
+
+  function renderStudentList() {
+    const list = document.getElementById('studentList');
+    list.innerHTML = '';
+    const todayIdx = getTodayIndexMon0();
+    let todayPresent = 0, todayAbsent = 0;
+    studentsData.forEach(s => {
+      const presentToday = s.weekly[todayIdx];
+      if(presentToday === true) todayPresent++;
+      else if(presentToday === false) todayAbsent++;
+      list.innerHTML += `
+        <div class="student-item">
+          <div>
+            <div class="fw-semibold">${s.name} <small class="text-white-50">(${s.roll})</small></div>
+            <div class="mini-week mt-1">
+              ${s.weekly.map((v)=> 
+                v === null 
+                ? `<div class="mini-dot null">N</div>` 
+                : `<div class="mini-dot ${v?'present':'absent'}">${v?'P':'A'}</div>`).join('')}
+            </div>
+          </div>
+          <div class="text-end">
+            <div class="badge ${presentToday===true ? 'bg-success' : presentToday===false ? 'bg-danger':'bg-secondary'} today-badge">
+              ${presentToday===true ? 'Present' : presentToday===false ? 'Absent' : 'NULL'}
+            </div>
+          </div>
+        </div>`;
+    });
+    document.getElementById('totalStudentsTop').textContent = totalStudentsFixed;
+    document.getElementById('todayPresent').textContent = todayPresent;
+    document.getElementById('todayAbsent').textContent = todayAbsent;
+  }
+
+  function computeWeeklyTotals() {
+    const totals = DAYS.map(()=>({present:0,absent:0,skip:false}));
+    studentsData.forEach(s=>{
+      s.weekly.forEach((v,idx)=>{
+        if(v === null) totals[idx].skip=true;
+        else if(v) totals[idx].present++;
+        else totals[idx].absent++;
+      });
+    });
+    return totals;
+  }
+
+  function renderWeeklyTable() {
+    const totals = computeWeeklyTotals();
+    const tbody = document.getElementById('weeklyTableBody');
+    tbody.innerHTML='';
+    let wp=0,wa=0;
+    totals.forEach((t,idx)=>{
+      if(idx===6) {
+        tbody.innerHTML += `<tr><td>${DAYS[idx]}</td><td>NULL</td><td>NULL</td></tr>`;
+      } else {
+        tbody.innerHTML += `<tr><td>${DAYS[idx]}</td><td>${t.present||'NULL'}</td><td>${t.absent||'NULL'}</td></tr>`;
+        wp+=t.present; wa+=t.absent;
+      }
+    });
+    document.getElementById('totalStudents').textContent=totalStudentsFixed;
+    document.getElementById('weekPresent').textContent=wp;
+    document.getElementById('weekAbsent').textContent=wa;
+    return {wp,wa,totals};
+  }
+
+  function computeMonthlyTotals() {
+    const weekTotals = [];
+    let mp=0,ma=0;
+    for(let w=1;w<=4;w++){
+      const present=Math.floor(Math.random()*totalStudentsFixed*6*0.8); // 6 working days
+      const absent=totalStudentsFixed*6-present;
+      weekTotals.push({present,absent});
+      mp+=present; ma+=absent;
+    }
+    return {weekTotals,mp,ma};
+  }
+
+  function renderMonthlyTable() {
+    const {weekTotals,mp,ma} = computeMonthlyTotals();
+    const tbody=document.getElementById('monthlyTableBody');
+    tbody.innerHTML='';
+    weekTotals.forEach((t,i)=>{
+      tbody.innerHTML+=`<tr><td>Week ${i+1}</td><td>${t.present||'NULL'}</td><td>${t.absent||'NULL'}</td></tr>`;
+    });
+    document.getElementById('totalStudentsMonthly').textContent=totalStudentsFixed;
+    document.getElementById('monthPresent').textContent=mp;
+    document.getElementById('monthAbsent').textContent=ma;
+    return {weekTotals,mp,ma};
+  }
+
+  let barChart, pieChart, barChartMonth, pieChartMonth;
+
+  function renderCharts() {
+    const {totals,wp,wa} = {totals:computeWeeklyTotals(),...renderWeeklyTable()};
+    if(barChart) barChart.destroy();
+    if(pieChart) pieChart.destroy();
+    const barCtx=document.getElementById('barChart').getContext('2d');
+    barChart=new Chart(barCtx,{type:'bar',
+      data:{labels:DAYS.map((d,i)=>i===6?'N':d),
+        datasets:[
+          {label:'Present',data:totals.map((t,i)=>i===6?0:t.present),backgroundColor:'#27ae60'},
+          {label:'Absent',data:totals.map((t,i)=>i===6?0:t.absent),backgroundColor:'#c0392b'}
+        ]},
+      options:{scales:{x:{ticks:{color:'#fff'}},y:{beginAtZero:true,ticks:{color:'#fff'}}}}
+    });
+    const pieCtx=document.getElementById('pieChart').getContext('2d');
+    pieChart=new Chart(pieCtx,{type:'pie',
+      data:{labels:['Present','Absent'],datasets:[{data:[wp,wa],backgroundColor:['#27ae60','#c0392b']}]}
+    });
+
+    const {weekTotals,mp,ma}=renderMonthlyTable();
+    if(barChartMonth) barChartMonth.destroy();
+    if(pieChartMonth) pieChartMonth.destroy();
+    const barCtxM=document.getElementById('barChartMonth').getContext('2d');
+    barChartMonth=new Chart(barCtxM,{type:'bar',
+      data:{labels:weekTotals.map((_,i)=>`Week ${i+1}`),
+      datasets:[
+        {label:'Present',data:weekTotals.map(t=>t.present),backgroundColor:'#2980b9'},
+        {label:'Absent',data:weekTotals.map(t=>t.absent),backgroundColor:'#8e44ad'}
+      ]},
+      options:{scales:{x:{ticks:{color:'#fff'}},y:{beginAtZero:true,ticks:{color:'#fff'}}}}
+    });
+    const pieCtxM=document.getElementById('pieChartMonth').getContext('2d');
+    pieChartMonth=new Chart(pieCtxM,{type:'pie',
+      data:{labels:['Present','Absent'],datasets:[{data:[mp,ma],backgroundColor:['#2980b9','#8e44ad']}]}
+    });
+  }
+
+  function setWeekRangeText(){
+    const today=new Date();
+    const monOffset=((today.getDay()+6)%7);
+    const monday=new Date(today);monday.setDate(today.getDate()-monOffset);
+    const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
+    const fmt=d=>`${d.getDate()}/${d.getMonth()+1}`;
+    document.getElementById('weekRange').textContent=`${fmt(monday)} - ${fmt(sunday)}`;
+    document.getElementById('monthRange').textContent=`${today.toLocaleString('default',{month:'long'})} ${today.getFullYear()}`;
+  }
+
+  function fullRender(){
+    renderStudentList();
+    renderCharts();
+    setWeekRangeText();
+  }
+
+  document.getElementById('refreshBtn').addEventListener('click',()=>{
+    studentsData=generateMockStudents(20);
+    fullRender();
+  });
+
+  fullRender();
+</script>
+</body>
+</html>

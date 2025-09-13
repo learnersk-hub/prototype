@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Monthly Attendance</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+       
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: #333;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+       
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            margin-top: 20px;
+        }
+       
+        header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #2c7be5;
+            margin-bottom: 30px;
+        }
+       
+        h1 {
+            color: #2c7be5;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+       
+        .month-selector {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+       
+        .month-selector select, .month-selector button {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+       
+        .month-selector button {
+            background: #2c7be5;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+       
+        .month-selector button:hover {
+            background: #1a68d1;
+        }
+       
+        .report-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+       
+        .info-box {
+            margin: 10px;
+        }
+       
+        .info-box h3 {
+            color: #2c7be5;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+       
+        .legend {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+       
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+       
+        .color-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+        }
+       
+        .present {
+            background-color: #28a745;
+        }
+       
+        .absent {
+            background-color: #dc3545;
+        }
+       
+        .null {
+            background-color: #6c757d;
+        }
+       
+        .table-container {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+       
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+       
+        th, td {
+            padding: 8px 10px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+            font-size: 14px;
+        }
+       
+        th {
+            background-color: #2c7be5;
+            color: white;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+        }
+       
+        .student-cell {
+            text-align: left;
+            background-color: #e9f7ff;
+            font-weight: 500;
+        }
+       
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+       
+        .present-cell {
+            background-color: rgba(40, 167, 69, 0.15);
+            color: #28a745;
+            font-weight: 500;
+        }
+       
+        .absent-cell {
+            background-color: rgba(220, 53, 69, 0.15);
+            color: #dc3545;
+            font-weight: 500;
+        }
+       
+        .null-cell {
+            background-color: rgba(108, 117, 125, 0.15);
+            color: #6c757d;
+            font-weight: 500;
+        }
+       
+        .chart-container {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+       
+        .chart-container h2 {
+            color: #2c7be5;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+       
+        .chart {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+       
+        .chart-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+       
+        .chart-label {
+            width: 150px;
+            font-weight: 500;
+        }
+       
+        .chart-bar-container {
+            flex-grow: 1;
+            height: 25px;
+            background: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+       
+        .chart-bar {
+            height: 100%;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: 500;
+            font-size: 14px;
+            transition: width 1s ease-in-out;
+        }
+       
+        .chart-value {
+            width: 60px;
+            text-align: right;
+            font-weight: 500;
+        }
+       
+        .actions {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+            gap: 15px;
+        }
+       
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+       
+        .btn-primary {
+            background: #2c7be5;
+            color: white;
+        }
+       
+        .btn-primary:hover {
+            background: #1a68d1;
+            transform: translateY(-2px);
+        }
+       
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+       
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+       
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            color: white;
+            font-size: 14px;
+        }
+       
+        /* Print-specific styles */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+                width: 100%;
+            }
+           
+            .container {
+                box-shadow: none;
+                padding: 15px;
+                margin: 0;
+                width: 100%;
+                max-width: 100%;
+                border-radius: 0;
+            }
+           
+            .month-selector, .actions, .chart-container {
+                display: none;
+            }
+           
+            header {
+                page-break-after: avoid;
+            }
+           
+            .report-info {
+                page-break-after: avoid;
+            }
+           
+            .legend {
+                page-break-after: avoid;
+            }
+           
+            .table-container {
+                overflow: visible;
+                width: 100%;
+            }
+           
+            table {
+                width: 100%;
+                page-break-inside: auto;
+            }
+           
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+           
+            th, td {
+                padding: 6px 8px;
+                font-size: 12px;
+            }
+           
+            /* Ensure colors print correctly */
+            .present-cell, .absent-cell, .null-cell {
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }
+           
+            footer {
+                page-break-before: avoid;
+            }
+           
+            /* Add page breaks for long tables */
+            .page-break {
+                page-break-before: always;
+            }
+        }
+       
+        @media (max-width: 768px) {
+            th, td {
+                padding: 6px 8px;
+                font-size: 12px;
+            }
+           
+            .report-info {
+                flex-direction: column;
+            }
+           
+            .chart-label {
+                width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Student Monthly Attendance</h1>
+            <p>Date-wise Attendance Status (Present, Absent, or Null)</p>
+        </header>
+       
+        <div class="month-selector">
+            <select id="month-select">
+                <option value="0">January</option>
+                <option value="1">February</option>
+                <option value="2">March</option>
+                <option value="3">April</option>
+                <option value="4">May</option>
+                <option value="5">June</option>
+                <option value="6">July</option>
+                <option value="7">August</option>
+                <option value="8" selected>September</option>
+                <option value="9">October</option>
+                <option value="10">November</option>
+                <option value="11">December</option>
+            </select>
+            <select id="year-select">
+                <option>2022</option>
+                <option selected>2023</option>
+                <option>2024</option>
+            </select>
+            <button onclick="updateTable()">Generate Report</button>
+        </div>
+       
+        <div class="report-info">
+            <div class="info-box">
+                <h3>Report Period</h3>
+                <p id="report-period">September 1, 2023 - September 30, 2023</p>
+            </div>
+            <div class="info-box">
+                <h3>Class</h3>
+                <p>Grade 10 - Section B</p>
+            </div>
+            <div class="info-box">
+                <h3>Total Students</h3>
+                <p>24</p>
+            </div>
+        </div>
+       
+        <div class="legend">
+            <div class="legend-item">
+                <div class="color-box present"></div>
+                <span>Present</span>
+            </div>
+            <div class="legend-item">
+                <div class="color-box absent"></div>
+                <span>Absent</span>
+            </div>
+            <div class="legend-item">
+                <div class="color-box null"></div>
+                <span>No Class (Null)</span>
+            </div>
+        </div>
+       
+        <div class="table-container">
+            <table id="attendance-table">
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Name</th>
+                        <!-- Days will be inserted by JavaScript -->
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data will be inserted by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+       
+        <div class="chart-container">
+            <h2>Class Engagement Chart</h2>
+            <div class="chart" id="engagement-chart">
+                <!-- Chart will be generated by JavaScript -->
+            </div>
+        </div>
+       
+        <div class="actions">
+            <button class="btn btn-primary" id="print-btn">Print Report</button>
+            <button class="btn btn-secondary" id="pdf-btn">Save as PDF</button>
+        </div>
+       
+        <footer>
+            <p>Generated on: <span id="current-date"></span></p>
+            <p>© 2023 School Management System. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Set current date
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('en-US', {
+            year: 'numeric', month: 'long', day: 'numeric'
+        });
+       
+        // Sample student data with engagement scores
+        const students = [
+            { id: 'S1001', name: 'Emma Johnson', engagement: 92 },
+            { id: 'S1002', name: 'Michael Smith', engagement: 85 },
+            { id: 'S1003', name: 'Sophia Williams', engagement: 96 },
+            { id: 'S1004', name: 'James Brown', engagement: 78 },
+            { id: 'S1005', name: 'Olivia Davis', engagement: 88 },
+            { id: 'S1006', name: 'William Miller', engagement: 72 },
+            { id: 'S1007', name: 'Isabella Wilson', engagement: 94 },
+            { id: 'S1008', name: 'Benjamin Taylor', engagement: 83 },
+            { id: 'S1009', name: 'Mia Anderson', engagement: 90 },
+            { id: 'S1010', name: 'Lucas Thomas', engagement: 76 },
+            { id: 'S1011', name: 'Amelia Jackson', engagement: 89 },
+            { id: 'S1012', name: 'Ethan White', engagement: 81 }
+        ];
+       
+        // Generate random attendance data
+        function generateAttendanceData(daysInMonth) {
+            const data = [];
+           
+            for (let i = 0; i < students.length; i++) {
+                const studentData = [];
+                for (let day = 1; day <= daysInMonth; day++) {
+                    // No classes on weekends (0 = Sunday, 6 = Saturday)
+                    const date = new Date(2023, 8, day);
+                    if (date.getDay() === 0 || date.getDay() === 6) {
+                        studentData.push('null');
+                        continue;
+                    }
+                   
+                    // Randomly assign present or absent
+                    const rand = Math.random();
+                    if (rand < 0.8) {
+                        studentData.push('present');
+                    } else {
+                        studentData.push('absent');
+                    }
+                }
+                data.push(studentData);
+            }
+           
+            return data;
+        }
+       
+        // Update engagement chart
+        function updateEngagementChart() {
+            const chartContainer = document.getElementById('engagement-chart');
+            chartContainer.innerHTML = '';
+           
+            // Sort students by engagement (highest first)
+            const sortedStudents = [...students].sort((a, b) => b.engagement - a.engagement);
+           
+            sortedStudents.forEach(student => {
+                const chartRow = document.createElement('div');
+                chartRow.className = 'chart-row';
+               
+                const label = document.createElement('div');
+                label.className = 'chart-label';
+                label.textContent = student.name;
+               
+                const barContainer = document.createElement('div');
+                barContainer.className = 'chart-bar-container';
+               
+                const bar = document.createElement('div');
+                bar.className = 'chart-bar';
+                bar.textContent = `${student.engagement}%`;
+                bar.style.width = '0%'; // Start at 0 for animation
+                bar.style.backgroundColor = getEngagementColor(student.engagement);
+               
+                const value = document.createElement('div');
+                value.className = 'chart-value';
+                value.textContent = `${student.engagement}%`;
+               
+                barContainer.appendChild(bar);
+                chartRow.appendChild(label);
+                chartRow.appendChild(barContainer);
+                chartRow.appendChild(value);
+                chartContainer.appendChild(chartRow);
+               
+                // Animate the bar
+                setTimeout(() => {
+                    bar.style.width = `${student.engagement}%`;
+                }, 100);
+            });
+        }
+       
+        // Get color based on engagement score
+        function getEngagementColor(score) {
+            if (score >= 90) return '#28a745';
+            if (score >= 80) return '#17a2b8';
+            if (score >= 70) return '#ffc107';
+            return '#dc3545';
+        }
+       
+        // Update table based on selected month
+        function updateTable() {
+            const monthSelect = document.getElementById('month-select');
+            const yearSelect = document.getElementById('year-select');
+            const month = parseInt(monthSelect.value);
+            const year = parseInt(yearSelect.value);
+           
+            // Get days in selected month
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+           
+            // Update report period
+            const monthNames = ["January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"];
+            document.getElementById('report-period').textContent =
+                `${monthNames[month]} 1, ${year} - ${monthNames[month]} ${daysInMonth}, ${year}`;
+           
+            // Generate attendance data
+            const attendanceData = generateAttendanceData(daysInMonth);
+           
+            // Build table header with days
+            const tableHeader = document.querySelector('#attendance-table thead tr');
+            // Clear existing day headers (keep first two columns)
+            while (tableHeader.children.length > 2) {
+                tableHeader.removeChild(tableHeader.lastChild);
+            }
+           
+            for (let day = 1; day <= daysInMonth; day++) {
+                const th = document.createElement('th');
+                th.textContent = day;
+                tableHeader.appendChild(th);
+            }
+           
+            // Build table body
+            const tableBody = document.querySelector('#attendance-table tbody');
+            tableBody.innerHTML = '';
+           
+            for (let i = 0; i < students.length; i++) {
+                const tr = document.createElement('tr');
+               
+                // Student ID
+                const idTd = document.createElement('td');
+                idTd.textContent = students[i].id;
+                idTd.className = 'student-cell';
+                tr.appendChild(idTd);
+               
+                // Student Name
+                const nameTd = document.createElement('td');
+                nameTd.textContent = students[i].name;
+                nameTd.className = 'student-cell';
+                tr.appendChild(nameTd);
+               
+                // Attendance data for each day
+                for (let day = 0; day < daysInMonth; day++) {
+                    const status = attendanceData[i][day];
+                    const td = document.createElement('td');
+                   
+                    if (status === 'present') {
+                        td.textContent = 'P';
+                        td.className = 'present-cell';
+                    } else if (status === 'absent') {
+                        td.textContent = 'A';
+                        td.className = 'absent-cell';
+                    } else {
+                        td.textContent = 'N';
+                        td.className = 'null-cell';
+                    }
+                   
+                    tr.appendChild(td);
+                }
+               
+                tableBody.appendChild(tr);
+            }
+           
+            // Update engagement chart
+            updateEngagementChart();
+        }
+       
+        // Initialize table with current month
+        window.onload = function() {
+            updateTable();
+           
+            // Add event listeners for buttons
+            document.getElementById('print-btn').addEventListener('click', function() {
+                window.print();
+            });
+           
+            document.getElementById('pdf-btn').addEventListener('click', function() {
+                alert('To save as PDF: 1. Click Print Report, 2. In the print dialog, change destination to "Save as PDF"');
+            });
+        };
+    </script>
+</body>
+</html>

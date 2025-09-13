@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register — Smart Attendance</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #4f46e5, #9333ea, #ec4899);
+      background-size: 300% 300%;
+      animation: gradientMove 10s infinite alternate;
+      color: #fff;
+    }
+    @keyframes gradientMove {
+      0% { background-position: left; }
+      100% { background-position: right; }
+    }
+    .card {
+      background: rgba(255,255,255,0.9);
+      backdrop-filter: blur(10px);
+      padding: 28px 26px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      width: 340px;
+      animation: fadeIn 1.2s ease-in-out;
+      color: #111;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    h2 {
+      text-align: center;
+      margin: 0 0 18px;
+      color: #4f46e5;
+    }
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+    input {
+      border: 1px solid #ddd;
+    }
+    button {
+      background: #111827;
+      color: #fff;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.1s;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+    button:hover { background: #0b1220; }
+    button:active { transform: translateY(2px); }
+    p {
+      text-align: center;
+      margin-top: 14px;
+      font-size: 0.95rem;
+      color: #333;
+    }
+    a {
+      color: #4f46e5;
+      font-weight: bold;
+      text-decoration: none;
+    }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Register</h2>
+    <form id="registerForm">
+      <input type="text" id="name" placeholder="Full Name" required>
+      <input type="email" id="email" placeholder="Email" required>
+      <input type="password" id="password" placeholder="Password" required>
+      <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+      <button type="submit">Register</button>
+    </form>
+    <p>
+      Already registered? <a href="login.html">Login here</a>
+    </p>
+  </div>
+
+  <script>
+    document.getElementById("registerForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const button = e.target.querySelector("button");
+      button.disabled = true;
+      button.textContent = "Registering...";
+
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const confirmPassword = document.getElementById("confirmPassword").value;
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        alert("Please enter a valid email address.");
+        resetButton(button);
+        return;
+      }
+
+      if (password.length < 8 || !/[0-9]/.test(password)) {
+        alert("Password must be at least 8 characters long and include at least one number.");
+        resetButton(button);
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        alert("Passwords do not match. Please re-enter.");
+        resetButton(button);
+        return;
+      }
+
+      try {
+        const url = "/api/register/teacher"; // relative path (works with backend)
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password })
+        });
+
+        let result;
+        try {
+          result = await response.json();
+        } catch {
+          throw new Error("Invalid server response.");
+        }
+
+        if (!response.ok) {
+          throw new Error(result.message || "Server error.");
+        }
+
+        alert(result.message);
+        if (result.message.toLowerCase().includes("successful")) {
+          window.location.href = "login.html";
+        }
+      } catch (error) {
+        alert(error.message || "Failed to register. Please try again later.");
+        console.error(error);
+      } finally {
+        resetButton(button);
+      }
+    });
+
+    function resetButton(button) {
+      button.disabled = false;
+      button.textContent = "Register";
+    }
+  </script>
+</body>
+</html>

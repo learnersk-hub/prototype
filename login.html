@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Teacher Login</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #4f46e5, #9333ea, #ec4899);
+      background-size: 300% 300%;
+      animation: gradientMove 10s infinite alternate;
+      color: #fff;
+    }
+
+    @keyframes gradientMove {
+      0% { background-position: left; }
+      100% { background-position: right; }
+    }
+
+    .container {
+      background: #fff;
+      padding: 40px 30px;
+      border-radius: 20px;
+      width: 380px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      text-align: center;
+      animation: fadeIn 1s ease-in-out;
+      color: #111827;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h2 {
+      margin-bottom: 25px;
+      color: #111827;
+      font-weight: 700;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+      transition: 0.3s;
+    }
+
+    input:focus {
+      border-color: #9333ea;
+      box-shadow: 0 0 8px rgba(147,51,234,0.4);
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #111827;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.1s;
+    }
+    button:hover { background: #0b1220; }
+    button:active { transform: translateY(2px); }
+
+    .flash-messages {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+
+    .flash-error {
+      color: #d9534f;
+      padding: 10px;
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+
+    .flash-success {
+      color: #155724;
+      padding: 10px;
+      background-color: #d4edda;
+      border: 1px solid #c3e6cb;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+
+    .register-link {
+      margin-top: 18px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .register-link a {
+      color: #9333ea;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .register-link a:hover { text-decoration: underline; }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Teacher Login</h2>
+
+    
+
+    <form action="page3.html" method="POST">
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" required>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required>
+      </div>
+
+      <button type="submit">Login</button>
+    </form>
+
+    <div class="register-link">
+      Don’t have an account? <a href="register.html">Register here</a>
+    </div>
+  </div>
+</body>
+</html>

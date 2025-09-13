@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InClass — Teacher Portal (Bluetooth)</title>
+  <style>
+    :root {
+      --indigo: #4f46e5;
+      --indigo-dark: #4338ca;
+      --purple: #9333ea;
+      --pink: #ec4899;
+      --glass: rgba(255, 255, 255, 0.9);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, var(--indigo), var(--purple), var(--pink));
+      background-size: 300% 300%;
+      animation: gradientMove 12s infinite alternate;
+      color: #333;
+    }
+    @keyframes gradientMove { 0% { background-position: left; } 100% { background-position: right; } }
+    .container { min-height: 100vh; padding: 24px; display: flex; flex-direction: column; align-items: center; }
+    h1 { color: #fff; margin: 0 0 10px; text-align: center; }
+    h2 { margin: 0 0 12px; color: var(--purple); }
+    .toolbar { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin: 16px 0 24px; }
+    button {
+      padding: 12px 18px; font-size: 0.95rem; background: var(--indigo); color: #fff; border: none; border-radius: 12px; cursor: pointer;
+      transition: background .25s, transform .08s;
+      box-shadow: 0 8px 20px rgba(0,0,0,.12);
+    }
+    button:hover { background: var(--indigo-dark); }
+    button:active { transform: translateY(1px); }
+    .danger { background: #ef4444; }
+    .danger:hover { background: #dc2626; }
+    .ghost { background: #111827; }
+    .ghost:hover { background: #0b1220; }
+    .grid { width: 100%; max-width: 1100px; display: grid; grid-template-columns: 1fr; gap: 18px; }
+    @media (min-width: 900px) { .grid { grid-template-columns: 1.2fr .8fr; } }
+    .card { background: var(--glass); backdrop-filter: blur(10px); border-radius: 18px; padding: 18px 20px; box-shadow: 0 8px 24px rgba(0,0,0,.15); }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .status { color: #fff; text-align: center; min-height: 24px; margin-top: 8px; }
+    .list { display: grid; gap: 8px; max-height: 440px; overflow: auto; padding-right: 4px; }
+    .item { display: grid; grid-template-columns: 42px 1fr auto; align-items: center; gap: 12px; padding: 10px; background: #fff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,.06); }
+    .avatar { width: 42px; height: 42px; border-radius: 50%; background: #e5e7eb; display: grid; place-items: center; font-weight: 700; color: var(--indigo); }
+    .meta { line-height: 1.2; }
+    .name { font-weight: 700; }
+    .subtle { color: #6b7280; font-size: .88rem; }
+    .pill { padding: 6px 10px; border-radius: 999px; background: #ecfdf5; color: #065f46; font-weight: 600; font-size: .85rem; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .stat { background: #fff; border-radius: 14px; padding: 14px; text-align: center; box-shadow: 0 4px 14px rgba(0,0,0,.07); }
+    .stat .big { font-size: 1.6rem; font-weight: 800; color: var(--indigo); }
+    canvas { width: 100% !important; height: 280px !important; background: rgba(255,255,255,.85); border-radius: 16px; padding: 10px; }
+    .legend { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+    .legend span { background: #fff; border-radius: 10px; padding: 6px 10px; box-shadow: 0 4px 12px rgba(0,0,0,.08); font-size: .85rem; }
+    .footer { color: #fff; opacity: .85; margin-top: 18px; font-size: .9rem; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>InClass — Teacher Portal (Bluetooth)</h1>
+    <div class="status" id="status">Ready.</div>
+
+    <div class="toolbar">
+      <button id="btnStart">Scan Bluetooth Device</button>
+      <button id="btnEnd" class="danger">End Session (Clear)</button>
+      <button id="btnLogout" class="ghost">Log Out</button>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="row" style="margin-bottom:12px">
+          <h2>Live Attendance</h2>
+          <span id="lastSync" class="subtle">Last sync: —</span>
+        </div>
+        <div id="list" class="list"></div>
+      </div>
+
+      <div class="card">
+        <h2>Session Stats</h2>
+        <div class="stats" style="margin:10px 0 16px">
+          <div class="stat"><div class="subtle">Present</div><div class="big" id="statPresent">0</div></div>
+          <div class="stat"><div class="subtle">Total Registered</div><div class="big" id="statTotal">20</div></div>
+          <div class="stat"><div class="subtle">Scan Events</div><div class="big" id="statEvents">0</div></div>
+        </div>
+        <canvas id="chart"></canvas>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+
+    <div class="footer">Real Bluetooth scan — select devices one by one. Browser limitation prevents auto multi-device scan.</div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const registeredStudents = [
+      { id: '21CS101', name: 'John Doe', roll: '21CS101' },
+      { id: '21CS102', name: 'Asha Singh', roll: '21CS102' },
+      { id: '21CS103', name: 'Rahul Verma', roll: '21CS103' },
+      { id: '21CS104', name: 'Priya Nair', roll: '21CS104' },
+      { id: '21CS105', name: 'Aariv Malhotra', roll: '21CS105' },
+      { id: '21CS106', name: 'Nayan Verma', roll: '21CS106' },
+      { id: '21CS107', name: 'Tanish Kapoor', roll: '21CS107' },
+      { id: '21CS108', name: 'Vedant Iyer', roll: '21CS108' },
+      { id: '21CS109', name: 'Prayan Deshmukh', roll: '21CS109' },
+      { id: '21CS110', name: 'Arjun Mehta', roll: '21CS110' },
+      { id: '21CS111', name: 'Riya Sharma', roll: '21CS111' },
+      { id: '21CS112', name: 'Siddharth Jain', roll: '21CS112' },
+      { id: '21CS113', name: 'Ananya Reddy', roll: '21CS113' },
+      { id: '21CS114', name: 'Karan Malhotra', roll: '21CS114' },
+      { id: '21CS115', name: 'Ishaan Gupta', roll: '21CS115' },
+      { id: '21CS116', name: 'Meera Nair', roll: '21CS116' },
+      { id: '21CS117', name: 'Aditya Singh', roll: '21CS117' },
+      { id: '21CS118', name: 'Tanvi Desai', roll: '21CS118' },
+      { id: '21CS119', name: 'Rohit Kapoor', roll: '21CS119' },
+      { id: '21CS120', name: 'Anika Verma', roll: '21CS120' }
+    ];
+
+    const seen = new Map();
+    let scanEvents = 0;
+
+    const statusEl = document.getElementById('status');
+    const listEl = document.getElementById('list');
+    const lastSyncEl = document.getElementById('lastSync');
+    const statPresentEl = document.getElementById('statPresent');
+    const statEventsEl = document.getElementById('statEvents');
+    const legendEl = document.getElementById('legend');
+    const ctx = document.getElementById('chart').getContext('2d');
+
+    const chartData = { labels: [], datasets: [{ label: 'Check-ins', data: [] }] };
+    const chart = new Chart(ctx, { type: 'bar', data: chartData, options: { scales: { y: { beginAtZero: true } } } });
+
+    function setStatus(msg){ statusEl.textContent = msg; }
+    function now(){ return new Date().toLocaleTimeString(); }
+    function updateStats(){ statPresentEl.textContent = seen.size; statEventsEl.textContent = scanEvents; }
+    function initials(name){ return name.split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase(); }
+
+    function renderList(){
+      listEl.innerHTML='';
+      Array.from(seen.values()).sort((a,b)=>a.roll.localeCompare(b.roll)).forEach(s=>{
+        const row=document.createElement('div');
+        row.className='item';
+        row.innerHTML=`
+          <div class="avatar">${initials(s.name)}</div>
+          <div class="meta">
+            <div class="name">${s.name} <span class="subtle">(${s.roll})</span></div>
+            <div class="subtle">Checked in at ${s.time}</div>
+          </div>
+          <div class="pill">Present</div>`;
+        listEl.appendChild(row);
+      });
+    }
+
+    function updateChartFor(id){
+      const idx=chartData.labels.indexOf(id);
+      if(idx===-1){ chartData.labels.push(id); chartData.datasets[0].data.push(1); }
+      else{ chartData.datasets[0].data[idx]+=1; }
+      chart.update(); renderLegend();
+    }
+
+    function renderLegend(){
+      legendEl.innerHTML='';
+      chartData.labels.forEach((lab,i)=>{
+        const s=registeredStudents.find(x=>x.id===lab);
+        const span=document.createElement('span');
+        span.textContent=`${s ? s.name : lab}: ${chartData.datasets[0].data[i]} scans`;
+        legendEl.appendChild(span);
+      });
+    }
+
+    async function scanBluetoothDevice(){
+      if(!navigator.bluetooth){ setStatus("Browser does not support Bluetooth."); return; }
+      try{
+        setStatus("Select a device...");
+        const device = await navigator.bluetooth.requestDevice({ acceptAllDevices:true });
+        // Match randomly to registered student (demo)
+        const match=registeredStudents[Math.floor(Math.random()*registeredStudents.length)];
+        if(!seen.has(match.id)){
+          seen.set(match.id,{name:match.name,roll:match.roll,time:now()});
+          updateChartFor(match.id);
+        }
+        scanEvents++;
+        updateStats();
+        renderList();
+        lastSyncEl.textContent=`Last sync: ${now()}`;
+        setStatus(`Attendance marked for ${match.name}`);
+      }catch(err){
+        setStatus("Bluetooth error: "+err.message);
+      }
+    }
+
+    document.getElementById('btnStart').addEventListener('click',scanBluetoothDevice);
+    document.getElementById('btnEnd').addEventListener('click',()=>{
+      seen.clear(); chartData.labels=[]; chartData.datasets[0].data=[]; chart.update();
+      renderLegend(); renderList(); updateStats(); setStatus('Session cleared.');
+    });
+    document.getElementById('btnLogout').addEventListener('click',()=> window.location.href='page2.html');
+
+    updateStats();
+  </script>
+</body>
+</html>
